@@ -90,6 +90,6 @@ jobs:
         working-directory: ./ansible
 
       - name: Run Ansible Playbook
-        run: ansible-playbook -i inventory.yml playbook.yml --extra-vars "APP_NAME=pasha-bot DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }} TG_TOKEN=${{ secrets.TG_TOKEN }} GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} USERNAME=${{ secrets.SUDO_USER }}"
+        run: ansible-playbook -i inventory.yml playbook.yml --extra-vars "APP_NAME=pasha-bot DOCKERHUB_USERNAME=${{ vars.DOCKERHUB_USERNAME }} TG_TOKEN=${{ secrets.TG_TOKEN }} GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} USERNAME=${{ secrets.SUDO_USER }}"
         working-directory: ./ansible
 

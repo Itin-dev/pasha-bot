@@ -65,7 +65,7 @@
     - name: Enable and start Docker service
       systemd:
         name: docker
-        enabled: yes
+        enabled: true
         state: started
 
     - name: Install Docker Compose
@@ -83,7 +83,7 @@
       user:
         name: "{{ ansible_user }}"
         groups: docker
-        append: yes
+        append: true
 
     - name: Verify Docker installation
       command: docker --version
@@ -105,7 +105,7 @@
       shell: |
         docker stop {{ APP_NAME }} || true
         docker rm {{ APP_NAME }} || true
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Pull the latest Docker image
       shell: docker pull {{ DOCKERHUB_USERNAME }}/{{ APP_NAME }}:latest
