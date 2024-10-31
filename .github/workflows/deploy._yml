@@ -1,5 +1,4 @@
 # name: Deploy Application
-
 # on:
 #   workflow_run:
 #     workflows: ["Build and Push Docker Image to Docker Hub"]
