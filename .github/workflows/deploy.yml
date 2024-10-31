@@ -1,46 +1,46 @@
-name: Deploy Application
+# name: Deploy Application
 
-on:
-  workflow_run:
-    workflows: ["Build and Push Docker Image to Docker Hub"]
-    types:
-      - completed
+# on:
+#   workflow_run:
+#     workflows: ["Build and Push Docker Image to Docker Hub"]
+#     types:
+#       - completed
 
-jobs:
-  ansible:
-    name: Configure VM with Ansible
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ubuntu-latest
+# jobs:
+#   ansible:
+#     name: Configure VM with Ansible
+#     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v3
 
-      - name: Install Ansible
-        run: sudo apt update && sudo apt install -y ansible
+#       - name: Install Ansible
+#         run: sudo apt update && sudo apt install -y ansible
 
-      - name: Add Private SSH Key for Ansible
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-        env:
-          ANSIBLE_SSH_PRIVATE_KEY_FILE: ~/.ssh/id_rsa
+#       - name: Add Private SSH Key for Ansible
+#         run: |
+#           mkdir -p ~/.ssh
+#           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+#           chmod 600 ~/.ssh/id_rsa
+#         env:
+#           ANSIBLE_SSH_PRIVATE_KEY_FILE: ~/.ssh/id_rsa
 
-      - name: Update Ansible Inventory with Public IP
-        run: |
-          sed -i "s/{{ public_ip }}/${{ secrets.SERVER_IP }}/g" inventory.yml
-        working-directory: ./ansible
+#       - name: Update Ansible Inventory with Public IP
+#         run: |
+#           sed -i "s/{{ public_ip }}/${{ secrets.SERVER_IP }}/g" inventory.yml
+#         working-directory: ./ansible
 
-      - name: Update Ansible Inventory with sudo user
-        run: |
-          sed -i "s/{{ sudo_user }}/${{ secrets.USERNAME }}/g" inventory.yml
-        working-directory: ./ansible
+#       - name: Update Ansible Inventory with sudo user
+#         run: |
+#           sed -i "s/{{ sudo_user }}/${{ secrets.USERNAME }}/g" inventory.yml
+#         working-directory: ./ansible
 
-      - name: Check Ansible Inventory
-        run: cat inventory.yml
-        working-directory: ./ansible
+#       - name: Check Ansible Inventory
+#         run: cat inventory.yml
+#         working-directory: ./ansible
 
-      - name: Run Ansible Playbook
-        run: ansible-playbook -i inventory.yml playbook.yml --extra-vars "APP_NAME=pasha-bot DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }} TG_TOKEN=${{ secrets.TG_TOKEN }} GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} USERNAME=${{ secrets.USERNAME }}"
-        working-directory: ./ansible
+#       - name: Run Ansible Playbook
+#         run: ansible-playbook -i inventory.yml playbook.yml --extra-vars "APP_NAME=pasha-bot DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }} TG_TOKEN=${{ secrets.TG_TOKEN }} GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} USERNAME=${{ secrets.USERNAME }}"
+#         working-directory: ./ansible
