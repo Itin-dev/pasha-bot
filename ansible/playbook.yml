@@ -1,7 +1,39 @@
 ---
 - hosts: all
-  become: yes
+  become: true
   tasks:
+    - name: Update all packages
+      apt:
+        update_cache: true
+        upgrade: dist
+
+    - name: Install development tools (curl, wget, etc.)
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - curl
+        - wget
+        - build-essential
+        - ca-certificates
+        - gnupg
+        - lsb-release
+        - software-properties-common
+        - mc
+
+    - name: Create directories in the user's home
+      file:
+        path: "/home/{{ ansible_user }}/dev/{{ item }}"
+        state: directory
+        owner: "{{ ansible_user }}"  # Ensure ansible_user owns the directory
+        group: "{{ ansible_user }}"  # Ensure the group is set to ansible_user
+        mode: '0755'
+      loop:
+        - compose
+        - backups
+        - scripts
+        - db
+
     - name: Create directory for the app (if necessary)
       file:
         path: /home/{{ USERNAME }}/dev/apps/{{ APP_NAME }}
@@ -24,6 +56,50 @@
         mode: '0644'
         owner: "{{ USERNAME }}"
         group: "{{ USERNAME }}"
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Enable and start Docker service
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Install Docker Compose
+      get_url:
+        url: "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-{{ ansible_system | lower }}-{{ ansible_architecture }}"
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+
+    - name: Add docker group
+      group:
+        name: docker
+        state: present
+
+    - name: Add the current user to the docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+
+    - name: Verify Docker installation
+      command: docker --version
+      register: docker_version
+
+    - name: Display Docker version
+      debug:
+        msg: "Docker version: {{ docker_version.stdout }}"
+
+    - name: Verify Docker Compose installation
+      command: docker-compose --version
+      register: docker_compose_version
+
+    - name: Display Docker Compose version
+      debug:
+        msg: "Docker Compose version: {{ docker_compose_version.stdout }}"
 
     - name: Remove existing container (if exists)
       shell: |
