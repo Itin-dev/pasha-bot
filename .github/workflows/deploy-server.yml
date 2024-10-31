@@ -58,6 +58,7 @@ jobs:
   ansible:
     name: Configure VM with Ansible
     runs-on: ubuntu-latest
+    needs: terraform
 
     steps:
       - name: Checkout repository
