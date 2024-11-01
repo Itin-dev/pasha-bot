@@ -1,9 +1,11 @@
 import logging
+import threading
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ConversationHandler
 from config import TG_TOKEN
 from handlers.commands import start, help_command
 from handlers.messages import handle_message, get_summary, process_message_count, ASK_MESSAGE_COUNT
 from db.db_manager import setup_database
+from daily.daily import run_daily_scheduler  # Импортируем функцию для запуска расписания
 
 # Set up logging
 logging.basicConfig(
@@ -20,6 +22,10 @@ def main():
 
     # Set up the database
     setup_database()
+
+    # Запускаем daily.py в отдельном потоке
+    daily_thread = threading.Thread(target=run_daily_scheduler)
+    daily_thread.start()
 
     # Initialize the bot
     application = ApplicationBuilder().token(TG_TOKEN).build()

@@ -70,8 +70,8 @@ def run_async_task():
 scheduler = BlockingScheduler(timezone=LOCAL_TZ)
 scheduler.add_job(run_async_task, 'cron', hour=23, minute=30)
 
-# Start the scheduler
-if __name__ == "__main__":
+# Function to start the scheduler, used in main.py
+def run_daily_scheduler():
     logger.info("Starting the daily summary scheduler")
     try:
         scheduler.start()
