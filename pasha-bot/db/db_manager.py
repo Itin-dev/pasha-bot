@@ -1,8 +1,11 @@
 import sqlite3
+import os
 from config import DB_PATH
 
 # Function to set up the database (create tables if not exist)
 def setup_database():
+    # Ensure the directory for the database file exists
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
