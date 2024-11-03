@@ -62,7 +62,7 @@ async def send_summary(start_time, end_time):
         # Send the summary to the Daily Summaries chat in a specific thread
         await bot.send_message(
             chat_id=DAILY_SUMMARY_CHAT_ID,
-            text=f"📋 Summary from {start_time.strftime('%Y-%m-%d %H:%M')} to {end_time.strftime('%Y-%m-%d %H:%M')}:\n\n{formatted_summary}",
+            text=f"📋 Summary from \n\n {start_time.strftime('%Y-%m-%d %H:%M')} to {end_time.strftime('%Y-%m-%d %H:%M')}: \n\n{formatted_summary}",
             message_thread_id=20284
         )
         logger.info("Successfully sent the summary")

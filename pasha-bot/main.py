@@ -3,7 +3,7 @@ import threading
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ConversationHandler
 from config import TG_TOKEN
 from handlers.commands import start, help_command
-from handlers.message_handler import handle_message
+from handlers.message_handler import handle_and_clean_messages
 from handlers.summary_handler import get_summary, process_message_count, ASK_MESSAGE_COUNT
 from db.db_manager import setup_database
 from cron.scheduler import run_summary_scheduler
@@ -24,7 +24,7 @@ def main():
     # Set up the database
     setup_database()
 
-    # Запускаем daily.py в отдельном потоке
+    # Start the daily summary scheduler in a separate thread
     daily_thread = threading.Thread(target=run_summary_scheduler)
     daily_thread.start()
 
@@ -44,8 +44,8 @@ def main():
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
 
-    # Add message handler for handling messages in groups
-    application.add_handler(MessageHandler(filters.TEXT & (filters.ChatType.GROUP | filters.ChatType.SUPERGROUP), handle_message))
+    application.add_handler(MessageHandler(filters.TEXT & (filters.ChatType.GROUP | filters.ChatType.SUPERGROUP), handle_and_clean_messages))
+
 
     # Add the conversation handler
     application.add_handler(conv_handler)
