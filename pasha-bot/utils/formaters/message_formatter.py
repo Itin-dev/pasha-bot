@@ -1,6 +1,6 @@
 
 import logging
-from handlers.messages.constants import THREAD_MAPPING
+from utils.mappers.thread_name_mappings import THREAD_MAPPING
 
 def format_messages(messages):
     formatted_messages = []

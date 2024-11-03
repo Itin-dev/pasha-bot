@@ -3,9 +3,10 @@ import threading
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ConversationHandler
 from config import TG_TOKEN
 from handlers.commands import start, help_command
-from handlers.messages import handle_message, get_summary, process_message_count, ASK_MESSAGE_COUNT
+from handlers.message_handler import handle_message
+from handlers.summary_handler import get_summary, process_message_count, ASK_MESSAGE_COUNT
 from db.db_manager import setup_database
-from daily.daily import run_daily_scheduler  # Импортируем функцию для запуска расписания
+from cron.scheduler import run_summary_scheduler
 
 # Set up logging
 logging.basicConfig(
@@ -24,13 +25,13 @@ def main():
     setup_database()
 
     # Запускаем daily.py в отдельном потоке
-    daily_thread = threading.Thread(target=run_daily_scheduler)
+    daily_thread = threading.Thread(target=run_summary_scheduler)
     daily_thread.start()
 
     # Initialize the bot
     application = ApplicationBuilder().token(TG_TOKEN).build()
     
-    # Add conversation handler for summarization input
+    # Add conversation handler for summarization input in private bot part
     conv_handler = ConversationHandler(
         entry_points=[MessageHandler(filters.TEXT & filters.Regex(r"🚀 Get summary"), get_summary)],
         states={
