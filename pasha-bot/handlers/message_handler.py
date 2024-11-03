@@ -13,28 +13,30 @@ EXCLUDED_BOTS = ['SummaryProBot', 'NokolayDevBot']  # Replace with actual bot us
 TARGET_THREAD_ID = 20284  # Replace with your specific thread ID
 
 async def handle_and_clean_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Handle incoming messages and store them in the database
+    # Log the incoming message
+    logger.info(f"Handling message from {update.effective_user.username}: {update.message.text} in thread {update.message.message_thread_id}")
+
+    # Store the message in the database
     if update.message and update.message.text:
         message_details = extract_message_details(update)
         insert_message(*message_details)  # Store the message in the database
         logger.info(f"Stored message from {message_details[2]} (ID: {message_details[0]}) in the database.")
 
-        # Log the incoming message
-        logger.info(f"Handling message from {update.effective_user.username}: {update.message.text} in thread {update.message.message_thread_id}")
-
-        # Check if the message is in the target thread
-        if update.message.message_thread_id == TARGET_THREAD_ID:
-            username = update.effective_user.username if update.effective_user.username else "Unknown User"
-            if username not in EXCLUDED_BOTS:
-                try:
-                    await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=update.message.message_id)
-                    logger.info(f"Deleted message from {username}: {update.message.text}")
-                except Exception as e:
-                    logger.error(f"Error deleting message: {str(e)}")
-            else:
-                logger.info(f"Message from excluded bot: {username}. Not deleting.")
+    # Check if the message is in the target thread
+    if update.message.message_thread_id == TARGET_THREAD_ID:
+        username = update.effective_user.username if update.effective_user.username else "Unknown User"
+        logger.info(f"Attempting to delete message from {username} in thread {TARGET_THREAD_ID}, Message ID: {update.message.message_id}")
+        
+        if username not in EXCLUDED_BOTS:
+            try:
+                await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=update.message.message_id)
+                logger.info(f"Deleted message from {username}: {update.message.text}")
+            except Exception as e:
+                logger.error(f"Error deleting message: {str(e)} - Message ID: {update.message.message_id}, Thread ID: {update.message.message_thread_id}, Chat ID: {update.effective_chat.id}")
         else:
-            logger.info(f"Message not from target thread ID {TARGET_THREAD_ID}. Ignoring.")
+            logger.info(f"Message from excluded bot: {username}. Not deleting.")
+    else:
+        logger.info(f"Message not from target thread ID {TARGET_THREAD_ID}. Ignoring.")
 
 def extract_message_details(update: Update) -> tuple:
     """Extract and return message details as a tuple."""
