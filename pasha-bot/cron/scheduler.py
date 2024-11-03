@@ -28,7 +28,7 @@ LOCAL_TZ = timezone('Europe/Zurich')  # Set your local timezone
 scheduled_times = [
     (7, 10),  
     (14, 0),  
-    (18, 30), 
+    (18, 35), 
     (22, 30), 
 ]
 
