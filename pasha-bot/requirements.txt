@@ -5,3 +5,4 @@ pytest
 google-generativeai
 httpx
 apscheduler
+aiosqlite
