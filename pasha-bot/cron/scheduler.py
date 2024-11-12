@@ -17,10 +17,9 @@ logger = logging.getLogger(__name__)
 
 # Define the specific times to send summaries (24-hour format)
 scheduled_times = [
-    (7, 10),  # 07:10 AM
-    (14, 0),  # 02:00 PM
-    (20, 00),  # 07:05 PM
-    (23, 30),  # 07:06 PM
+    (7, 0),
+    (18, 0),
+    (23, 30),
 ]
 
 # Timezone for scheduling and database (assuming database stores UTC time)
@@ -79,7 +78,7 @@ async def send_summary(context: CallbackContext):
     current_time_utc = current_time.astimezone(UTC_TZ)
 
     # Log the times being used for fetching messages
-    logger.info(f"Fetching messages from {previous_time_utc} to {current_time_utc}")
+    logger.info(f"Fetching messages from {previous_time_utc.strftime('%Y-%m-%d %H:%M:%S')} UTC to {current_time_utc.strftime('%Y-%m-%d %H:%M:%S')} UTC")
 
     try:
         # Fetch messages from the database using the UTC time range
@@ -105,7 +104,7 @@ async def send_summary(context: CallbackContext):
         # Send the summary via bot
         await context.bot.send_message(
             chat_id=DAILY_SUMMARY_CHAT_ID,
-            text=f"📋 Summary from {previous_time_utc.strftime('%Y-%m-%d %H:%M')} to {current_time_utc.strftime('%Y-%m-%d %H:%M')}:\n\n{formatted_summary}",
+            text=f"📋 Summary from {(previous_time_utc + datetime.timedelta(hours=1)).strftime('%Y-%m-%d %H:%M')} UTC+1 to {(current_time_utc + datetime.timedelta(hours=1)).strftime('%Y-%m-%d %H:%M')} UTC+1:\n\n{formatted_summary}",
             message_thread_id=20284
         )
         logger.info("Successfully sent the summary")
