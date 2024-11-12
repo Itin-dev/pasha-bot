@@ -13,38 +13,48 @@ EXCLUDED_BOTS = ['SummaryProBot', 'NokolayDevBot']  # Replace with actual bot us
 TARGET_THREAD_ID = 20284  # Replace with your specific thread ID
 
 async def handle_and_clean_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Log the incoming message
-    logger.info(f"Handling message from {update.effective_user.username}: {update.message.text} in thread {update.message.message_thread_id}")
-
-    # Store the message in the database
-    if update.message and update.message.text:
-        message_details = extract_message_details(update)
-        insert_message(*message_details)  # Store the message in the database
-        logger.info(f"Stored message from {message_details[2]} (ID: {message_details[0]}) in the database.")
-
-    # Check if the message is in the target thread
-    if update.message.message_thread_id == TARGET_THREAD_ID:
-        username = update.effective_user.username if update.effective_user.username else "Unknown User"
-        logger.info(f"Attempting to delete message from {username} in thread {TARGET_THREAD_ID}, Message ID: {update.message.message_id}")
+    # Ensure the update contains a message before proceeding
+    if update.message:
+        username = update.effective_user.username if update.effective_user else "Unknown User"
+        message_text = update.message.text or "No text content"
+        thread_id = update.message.message_thread_id if update.message.is_topic_message else 10000
         
-        if username not in EXCLUDED_BOTS:
-            try:
-                await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=update.message.message_id)
-                logger.info(f"Deleted message from {username}: {update.message.text}")
-            except Exception as e:
-                logger.error(f"Error deleting message: {str(e)} - Message ID: {update.message.message_id}, Thread ID: {update.message.message_thread_id}, Chat ID: {update.effective_chat.id}")
+        logger.info(f"Handling message from {username}: {message_text} in thread {thread_id}")
+
+        # Store the message in the database
+        if message_text:
+            message_details = extract_message_details(update)
+            insert_message(*message_details)  # Store the message in the database
+            logger.info(f"Stored message from {message_details[2]} (ID: {message_details[0]}) in the database.")
+        
+        # Check if the message is in the target thread and not from an excluded bot
+        if thread_id == TARGET_THREAD_ID:
+            if username not in EXCLUDED_BOTS:
+                try:
+                    await context.bot.delete_message(
+                        chat_id=update.effective_chat.id,
+                        message_id=update.message.message_id
+                    )
+                    logger.info(f"Deleted message from {username}: {message_text}")
+                except Exception as e:
+                    logger.error(
+                        f"Error deleting message: {str(e)} - Message ID: {update.message.message_id}, "
+                        f"Thread ID: {thread_id}, Chat ID: {update.effective_chat.id}"
+                    )
+            else:
+                logger.info(f"Message from excluded bot: {username}. Not deleting.")
         else:
-            logger.info(f"Message from excluded bot: {username}. Not deleting.")
+            logger.info(f"Message not from target thread ID {TARGET_THREAD_ID}. Ignoring.")
     else:
-        logger.info(f"Message not from target thread ID {TARGET_THREAD_ID}. Ignoring.")
+        logger.warning("Received an update with no message content. Skipping.")
 
 def extract_message_details(update: Update) -> tuple:
     """Extract and return message details as a tuple."""
     message_id = update.message.message_id
     date = update.message.date.isoformat()
-    username = update.effective_user.username or update.effective_user.first_name
+    username = update.effective_user.username or update.effective_user.first_name or "Unknown User"
     thread_id = update.message.message_thread_id if update.message.is_topic_message else 10000
-    message_text = update.message.text
+    message_text = update.message.text or "No text content"
 
-    logger.info(f"Handling message from {username} (ID: {message_id}) in thread {thread_id}.")
+    logger.info(f"Extracted message details from {username} (ID: {message_id}) in thread {thread_id}.")
     return message_id, date, username, message_text, thread_id
