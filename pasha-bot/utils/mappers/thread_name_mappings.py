@@ -15,6 +15,7 @@ THREAD_MAPPING = {
     14122: "👩🏻‍💻 ИТ помощь",
     22304: "💻 Hackathon",
     28689: "📅 Events",
+    18325: "📅 Events",
     20284: "📝 Daily Summaries"
 }
 
