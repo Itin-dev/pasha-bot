@@ -43,10 +43,10 @@ def get_gemini_summary(prompt: str) -> str:
         max_output_tokens=2700,             # Allows for summaries up to your limit.
         temperature=0.3,                    # Keeps responses focused and consistent.
         top_p=0.9,                          # Enables nucleus sampling for diversity.
-        top_k=40,                           # Considers the top 40 tokens for diversity.
+        top_k=50,                           # Slightly increased for more diverse token selection.
         response_mime_type="text/plain",    # Ensures plain text output.
-        presence_penalty=0.2,               # Discourages token repetition.
-        frequency_penalty=0.5               # Penalizes overused tokens for better vocabulary.
+        presence_penalty=0.3,               # Slightly increased to discourage repetition.
+        frequency_penalty=0.6               # Slightly increased to further penalize repetitive tokens.
     )
     
     try:
