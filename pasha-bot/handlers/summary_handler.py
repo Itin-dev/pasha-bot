@@ -4,6 +4,7 @@ from telegram.ext import ContextTypes, ConversationHandler
 from db.fetchers import fetch_last_n_messages
 from ai_api.gemini.prompt_builder import build_prompt
 from ai_api.gemini.api_client import get_gemini_summary
+from keyboards.buttons import get_numeric_keyboard
 from utils.formaters.message_formatter import format_messages, replace_thread_ids_with_names
 from collections import defaultdict
 import time
@@ -24,8 +25,11 @@ QUERY_TIMEOUT = 60  # Time window for query limit (in seconds)
 user_queries = defaultdict(list)
 
 async def get_summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Ask the user how many messages they want summarized."""
-    await update.message.reply_text(REQUEST_SUMMARY_MESSAGE)
+    """Ask the user how many messages they want summarized, with a numeric keyboard."""
+    await update.message.reply_text(
+        REQUEST_SUMMARY_MESSAGE,
+        reply_markup=get_numeric_keyboard()  # Add the numeric keyboard here
+    )
     return ASK_MESSAGE_COUNT
 
 async def process_message_count(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -33,6 +37,11 @@ async def process_message_count(update: Update, context: ContextTypes.DEFAULT_TY
     user_input = update.message.text.strip()
     user_id = update.message.from_user.id  # Get the user ID
     logging.info(f"Received user input: {user_input} from user {user_id}")
+
+    # Handle "Cancel"
+    if user_input.lower() == "cancel":
+        await update.message.reply_text("Запрос отменен.")
+        return ConversationHandler.END
 
     # Check the frequency of user queries
     if not is_query_allowed(user_id):
