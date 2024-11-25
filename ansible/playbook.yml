@@ -45,6 +45,12 @@
         path: /home/{{ USERNAME }}/dev/apps/{{ APP_NAME }}/db  # Create the db directory
         state: directory
         mode: '0755'
+    
+    - name: Create a directory for persistent logs
+      file:
+        path: /home/{{ USERNAME }}/dev/apps/{{ APP_NAME }}/log
+        state: directory
+        mode: '0755'
 
     - name: Create an env file for the Python app
       copy:
@@ -115,4 +121,5 @@
         docker run -d --name {{ APP_NAME }} \
         --env-file /home/{{ USERNAME }}/dev/apps/{{ APP_NAME }}/.env \
         -v /home/{{ USERNAME }}/dev/apps/{{ APP_NAME }}/db:/{{ APP_NAME }}/db_data \
+        -v /home/{{ USERNAME }}/dev/apps/{{ APP_NAME }}/log:/{{ APP_NAME }}/log \
         {{ DOCKERHUB_USERNAME }}/{{ APP_NAME }}:latest
