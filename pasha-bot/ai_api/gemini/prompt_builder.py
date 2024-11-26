@@ -14,8 +14,7 @@ def build_prompt(message_block):
         "Limit the output to 1-3 bullet points per thread. If a thread has no significant points, omit it entirely.\n\n"
         "Make sure to summarize in Russian, without using any formatting like bold, italics, or headers. "
         "Keep it simple and focused. Ensure that all threads with substantial information are included in the summary.\n\n"
-        "Here is the data to summarize:\n\n"
-        "{message_block}"  # Replace `message_block` with the actual conversation data
+        f"Conversations:\n\n{message_block}"  #  Replace `message_block` with the actual conversatio
     )
 
 
