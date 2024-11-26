@@ -4,6 +4,7 @@ from telegram.ext import ContextTypes, ConversationHandler
 from db.fetchers import fetch_last_n_messages
 from ai_api.gemini.prompt_builder import build_prompt
 from ai_api.gemini.api_client import get_gemini_summary
+from keyboards.buttons import get_start_buttons
 from keyboards.buttons import get_numeric_keyboard
 from utils.formaters.message_formatter import format_messages, replace_thread_ids_with_names
 from collections import defaultdict
@@ -33,9 +34,8 @@ async def get_summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     return ASK_MESSAGE_COUNT
 
 async def process_message_count(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """Process the user's input for the number of messages to summarize."""
     user_input = update.message.text.strip()
-    user_id = update.message.from_user.id  # Get the user ID
+    user_id = update.message.from_user.id
     logging.info(f"Received user input: {user_input} from user {user_id}")
 
     # Handle "Cancel"
@@ -43,17 +43,20 @@ async def process_message_count(update: Update, context: ContextTypes.DEFAULT_TY
         await update.message.reply_text("Запрос отменен.")
         return ConversationHandler.END
 
-    # Check the frequency of user queries
+    # Check query limits
     if not is_query_allowed(user_id):
         await update.message.reply_text("Превышен лимит запросов. Пожалуйста, подождите минуту и попробуйте снова.")
         return ASK_MESSAGE_COUNT
 
     try:
+        # Validate input
         message_count = validate_message_count(user_input)
+
+        # Fetch and handle messages
         messages = fetch_last_n_messages(message_count)
         return await handle_fetched_messages(update, messages)
     except ValueError as e:
-        await update.message.reply_text(str(e))  # Provide custom error message based on validation
+        await update.message.reply_text(str(e))
         return ASK_MESSAGE_COUNT
     except Exception as e:
         logging.error(f"An error occurred: {str(e)}")
@@ -70,22 +73,47 @@ def validate_message_count(user_input: str) -> int:
     return message_count
 
 async def handle_fetched_messages(update: Update, messages: list) -> int:
-    """Handle the messages fetched from the database."""
+    """Handle the messages fetched from the database and respond with a summary."""
     if not messages:
-        await update.message.reply_text(SUMMARY_NOT_FOUND_MESSAGE)
+        await update.message.reply_text("No messages found for summary.")
+        # Send the start button again after the response
+        await update.message.reply_text(
+            "Main menu:",
+            reply_markup=get_start_buttons()  # Send the main menu buttons again
+        )
         return ConversationHandler.END
 
-    message_block = format_messages(messages)
-    prompt = build_prompt(message_block)
-    logging.info(f"Generated prompt for Gemini API: {prompt}")
+    # Step 1: Format the messages (Format once, and only here)
+    formatted_message_block = format_messages(messages)
+    logging.info(f"Formatted message block:\n{formatted_message_block}")
 
+    # Step 2: Replace thread IDs with names (optional, done once here)
+    formatted_message_block_with_names = replace_thread_ids_with_names(formatted_message_block)
+    logging.info(f"Formatted message block with names:\n{formatted_message_block_with_names}")
+
+    # Step 3: Build the final prompt using the formatted message block (Only once)
+    prompt = build_prompt(formatted_message_block_with_names)  # Here, we use the formatted message only once
+    logging.info(f"Generated prompt for Gemini API:\n{prompt}")
+
+    # Step 4: Send the prompt to Gemini API (only once)
     summary = get_gemini_summary(prompt)
-    logging.info(f"Received summary from Gemini API: {summary}")
+    logging.info(f"Received summary from Gemini API:\n{summary}")
 
-    summary = replace_thread_ids_with_names(summary)
-    await update.message.reply_text(f"{SUMMARY_RESPONSE_PREFIX}{summary}")
-    
+    # Step 5: Replace thread IDs with names in the summary (if needed)
+    summary_with_names = replace_thread_ids_with_names(summary)
+    logging.info(f"Summary with thread names:\n{summary_with_names}")
+
+    # Step 6: Send the summarized message to the user
+    await update.message.reply_text(f"Ключевые обсуждения:\n\n{summary_with_names}")
+
+    # Ensure the "Get summary" button is displayed after the summary response
+    await update.message.reply_text(
+        "\n\n Используйте кнопку внизу для нового запроса:",
+        reply_markup=get_start_buttons()  # Send the main menu buttons again
+    )
+
     return ConversationHandler.END
+
 
 def is_query_allowed(user_id: int) -> bool:
     """Check if the user is allowed to make a request based on query frequency."""
